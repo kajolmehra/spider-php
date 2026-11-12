@@ -546,31 +546,6 @@ class lib_entity
          */
     }
 
-    /** SQL constraints explicitly declared by a table's schema definition. */
-    function schemaIndexes($params)
-    {
-        $indexes = isset($params['indexes']) ? $params['indexes'] : array();
-        if (isset($params['primary_key'])) {
-            $indexes = array('PRIMARY' => array('columns' => $params['primary_key'], 'unique' => true)) + $indexes;
-        }
-        foreach ($indexes as $name => &$index) {
-            if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $name) || empty($index['columns']) || !is_array($index['columns'])) {
-                throw new InvalidArgumentException('Invalid schema index definition.');
-            }
-            $columns = array();
-            foreach ($index['columns'] as $column) {
-                if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $column) || !isset($params['fields'][$column])) {
-                    throw new InvalidArgumentException('Invalid schema index column.');
-                }
-                $columns[] = '`' . $column . '`';
-            }
-            $index['unique'] = $name === 'PRIMARY' || !empty($index['unique']);
-            $index['sql'] = $name === 'PRIMARY' ? 'PRIMARY KEY' : ($index['unique'] ? 'UNIQUE KEY ' : 'KEY ') . '`' . $name . '`';
-            $index['sql'] .= ' (' . implode(',', $columns) . ')';
-        }
-        unset($index);
-        return $indexes;
-    }
     function createSQLModule($name, $params = array(), $repair = false, $engine = "InnoDB")
     {
         $db = lib_database::getInstance();
@@ -612,14 +587,7 @@ class lib_entity
             $sql .= $string;
         }
 
-        $indexes = $this->schemaIndexes($params);
-        if (!isset($indexes['PRIMARY'])) $sql .= ', PRIMARY KEY(id)';
-        foreach ($indexes as $index) $sql .= ', ' . $index['sql'];
-        $sql .= ') ENGINE=' . $engine;
-        if (isset($params['charset'])) {
-            if (!preg_match('/^[a-zA-Z0-9_]+$/D', $params['charset'])) throw new InvalidArgumentException('Invalid schema charset.');
-            $sql .= ' DEFAULT CHARSET=' . $params['charset'];
-        }
+        $sql .= ", PRIMARY KEY(id)) ENGINE=" . $engine;
         $qry = $db->query($sql);
 
         if (! $repair) {

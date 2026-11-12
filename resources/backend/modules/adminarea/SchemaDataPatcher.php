@@ -70,12 +70,6 @@ class SchemaDataPatcher
                         if (isset($dbField[$field['name']])) {
                             continue;
                         }
-                        if (isset($desc['primary_key'])) {
-                            $sql = 'ALTER TABLE `' . $row['name'] . '` ADD COLUMN ' . $entity->convertFieldArrayToString($field);
-                            if (!$db->query($sql, true)) throw new RuntimeException('Unable to add schema column ' . $row['name'] . '.' . $field['name'] . '.');
-                            echo $sql . '<br />';
-                            continue;
-                        }
                         $fieldType = $field['type'];
 
                         $temp = array(
